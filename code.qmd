@@ -1,0 +1,51 @@
+---
+format: 
+  html:
+    df-print: kable
+    code-fold: true
+editor: source
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r}
+#| include: false
+# setwd("/home/agricolamz/work/materials/2024.04.20_epigraphy/cleaned")
+library(tidyverse)
+theme_set(theme_minimal() + theme(text = element_text(size = 16), legend.position = "bottom"))
+
+df <- readxl::read_xlsx("full_dataset.xlsx")
+
+df |> 
+  distinct(code, region) |> 
+  count(region) ->
+  tombs
+```
+
+Всего у нас `{r} nrow(df)` имен с `r tombs$n[1]` ашкеназских и `r tombs$n[2]` горско-еврейских надгробий, на которых сохранились одно из имен (покойного/покойной или его отца) и дата. Причем в анализе использовались и имя покойного/покойной, и имя его/ее отца, в связи с этим мужских имен в датасете больше, чем женских:
+
+```{r}
+df |> 
+  count(gender)
+```
+
+Кроме того, женские надгробия встречаются значительно реже в Дагестане:
+
+```{r}
+df |> 
+  count(region, gender) |> 
+  pivot_wider(names_from = region, values_from = n)
+```
+
+Вот как надгробия распределены по времени
+
+```{r}
+df |> 
+  mutate(year = as.double(year)) |> 
+  ggplot(aes(year, fill = gender))+
+  geom_histogram(bins = 30)+
+  facet_wrap(~region, nrow = 2, scales = "free_y")+
+  labs(x = NULL, y = NULL, fill = NULL)
+```
+
+
