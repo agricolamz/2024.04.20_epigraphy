@@ -13,10 +13,9 @@ editor_options:
 # setwd("/home/agricolamz/work/materials/2024.04.20_epigraphy/cleaned")
 library(tidyverse)
 theme_set(theme_minimal() + theme(text = element_text(size = 16), legend.position = "bottom"))
+library(infotheo)
 
-readxl::read_xlsx("full_dataset.xlsx") |> 
-  mutate(year = as.double(year)) ->
-  df
+df <- readxl::read_xlsx("full_dataset.xlsx")
 
 df |> 
   distinct(code, region) |> 
@@ -24,7 +23,7 @@ df |>
   tombs
 ```
 
-Всего у нас `{r} nrow(df)` имен с `r tombs$n[1]` ашкеназских и `r tombs$n[2]` горско-еврейских надгробий, на которых сохранились одно из имен (покойного/покойной или его отца) и дата. Причем в анализе использовались и имя покойного/покойной, и имя его/ее отца, в связи с этим мужских имен в датасете больше, чем женских:
+Мы анализируем `r nrow(df)` имя, обнаруженные на `r tombs$n[1]` ашкеназских и `r tombs$n[2]` горско-еврейских надгробиях в `r length(unique(df$place))` кладбищах. Надгробия охватывают временной промежуток c `{r} min(df$year)` по `{r} max(df$year)` года. В исследовании исследовались только те надгробия, на которых сохранились хотя бы одно из имен (покойного/покойной или его отца) и год смерти. Причем в анализе использовались и имя покойного/покойной, и имя его/ее отца, в связи с этим мужских имен в датасете больше, чем женских:
 
 ```{r}
 df |> 
@@ -50,5 +49,32 @@ df |>
   labs(x = NULL, y = NULL, fill = NULL)+
   scale_fill_manual(values = c("#009E73", "#E69F00"))
 ```
+
+Для оценки разнообразия имен мы использовали меру скользящей энтропии:
+
+```{r}
+window <- 15
+
+min_year <- min(df$year, na.rm = TRUE)
+max_year <- max(df$year, na.rm = TRUE)-window
+map_dfr(seq(from = min_year, to = max_year), function(j){
+  df |>
+    filter(year >= j,
+           year < j+window) |> 
+    group_by(region) |> 
+    summarise(entropy_value = entropy(name)) |> 
+    mutate(year = j)
+  }) ->
+  entropy_overall
+
+entropy_overall |> 
+  ggplot(aes(year, entropy_value))+
+  geom_line()+
+  facet_wrap(~region, nrow = 2)+
+  labs(x = NULL, y = "значение скользящей энтропии",
+       caption = str_glue("используется окно в {window} лет"))
+```
+
+По графикам видно, что на ашкеназские общины война повлияла значительно сильнее, чем на горско-еврейские. Однако дьявол в деталях: как устроены эти графики по индивидуальным населенным пунктам?
 
 
