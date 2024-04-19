@@ -9,11 +9,11 @@ editor_options:
 ---
 
 ```{r}
-#| include: false
 # setwd("/home/agricolamz/work/materials/2024.04.20_epigraphy/cleaned")
-library(tidyverse)
+suppressPackageStartupMessages(library(tidyverse))
 theme_set(theme_minimal() + theme(text = element_text(size = 16), legend.position = "bottom"))
 library(infotheo)
+library(tidytext)
 
 df <- readxl::read_xlsx("full_dataset.xlsx")
 
@@ -23,7 +23,7 @@ df |>
   tombs
 ```
 
-Мы анализируем `r nrow(df)` имя, обнаруженные на `r tombs$n[1]` ашкеназских и `r tombs$n[2]` горско-еврейских надгробиях в `r length(unique(df$place))` кладбищах. Надгробия охватывают временной промежуток c `{r} min(df$year)` по `{r} max(df$year)` года. В исследовании исследовались только те надгробия, на которых сохранились хотя бы одно из имен (покойного/покойной или его отца) и год смерти. Причем в анализе использовались и имя покойного/покойной, и имя его/ее отца, в связи с этим мужских имен в датасете больше, чем женских:
+Мы анализируем `r nrow(df)` имени, обнаруженные на `r tombs$n[1]` ашкеназских и `r tombs$n[2]` горско-еврейских надгробиях в `r length(unique(df$place))` кладбищах. Надгробия охватывают временной промежуток c `{r} min(df$year)` по `{r} max(df$year)` года. В исследовании исследовались только те надгробия, на которых сохранились хотя бы одно из имен (покойного/покойной или его отца) и год смерти. Причем в анализе использовались и имя покойного/покойной, и имя его/ее отца, в связи с этим мужских имен в датасете больше, чем женских:
 
 ```{r}
 df |> 
@@ -79,6 +79,11 @@ entropy_overall |>
 
 ```{r}
 #| fig-height: 11
+df |> 
+  ggplot(aes(year))+
+  geom_histogram(bins = 30)+
+  facet_wrap(~region+place, scales = "free", ncol = 3)
+
 map_dfr(seq(from = min_year, to = max_year), function(j){
   df |>
     filter(year >= j,
@@ -96,5 +101,40 @@ entropy_by_place |>
   labs(x = NULL, y = "значение скользящей энтропии",
        caption = str_glue("используется окно в {window} лет"))
 ```
+
+Сравним топ 25 мужских и женских имен по частотности:
+
+```{r}
+df |> 
+  filter(gender == "m") |> 
+  count(name, region) |> 
+  group_by(region) |> 
+  slice_max(order_by = n, n = 25) |> 
+  mutate(name = reorder_within(name, within = region, n)) |> 
+  ggplot(aes(n, name))+
+  geom_col()+
+  scale_y_reordered()+
+  facet_wrap(~region, scales = "free")+
+  labs(x = NULL, y = NULL)
+
+df |> 
+  filter(gender == "f") |> 
+  count(name, region) |> 
+  group_by(region) |> 
+  slice_max(order_by = n, n = 25) |> 
+  mutate(name = reorder_within(name, within = region, n)) |> 
+  ggplot(aes(n, name))+
+  geom_col()+
+  scale_y_reordered()+
+  facet_wrap(~region, scales = "free")+
+  labs(x = NULL, y = NULL)
+
+df |> 
+  distinct(name) |> 
+  nrow() ->
+  n_names
+```
+
+В датасете `r n_names` уникальных имен, сравнивать их частотности сложно, поэтому мы использовали меру tf-idf, которая позволяет выделить ядро общее для двух групп и выделить имена, которые их отличают. 
 
 
