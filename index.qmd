@@ -77,4 +77,24 @@ entropy_overall |>
 
 По графикам видно, что на ашкеназские общины война повлияла значительно сильнее, чем на горско-еврейские. Однако дьявол в деталях: как устроены эти графики по индивидуальным населенным пунктам?
 
+```{r}
+#| fig-height: 11
+map_dfr(seq(from = min_year, to = max_year), function(j){
+  df |>
+    filter(year >= j,
+           year < j+window) |>
+    group_by(region, place) |> 
+    summarise(entropy_value = entropy(name), .groups = "keep") |> 
+    mutate(year = j)
+  }) ->
+  entropy_by_place
+
+entropy_by_place |> 
+  ggplot(aes(year, entropy_value))+
+  geom_line()+
+  facet_wrap(~region+place, scales = "free", ncol = 3)+
+  labs(x = NULL, y = "значение скользящей энтропии",
+       caption = str_glue("используется окно в {window} лет"))
+```
+
 
