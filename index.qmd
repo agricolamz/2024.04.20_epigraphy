@@ -14,7 +14,9 @@ editor_options:
 library(tidyverse)
 theme_set(theme_minimal() + theme(text = element_text(size = 16), legend.position = "bottom"))
 
-df <- readxl::read_xlsx("full_dataset.xlsx")
+readxl::read_xlsx("full_dataset.xlsx") |> 
+  mutate(year = as.double(year)) ->
+  df
 
 df |> 
   distinct(code, region) |> 
@@ -41,11 +43,12 @@ df |>
 
 ```{r}
 df |> 
-  mutate(year = as.double(year)) |> 
+  mutate(gender = factor(gender, levels = c("m", "f"))) |> 
   ggplot(aes(year, fill = gender))+
-  geom_histogram(bins = 30)+
+  geom_histogram(bins = 30, position = "identity")+
   facet_wrap(~region, nrow = 2, scales = "free_y")+
-  labs(x = NULL, y = NULL, fill = NULL)
+  labs(x = NULL, y = NULL, fill = NULL)+
+  scale_fill_manual(values = c("#009E73", "#E69F00"))
 ```
 
 
