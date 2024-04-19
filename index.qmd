@@ -135,7 +135,7 @@ df |>
   n_names
 ```
 
-В датасете `r n_names` уникальных имен, сравнивать их частотности сложно, поэтому мы использовали меру tf-idf, которая позволяет выделить ядро общее для двух групп и выделить имена, которые их отличают.
+В датасете `r n_names` уникальных имен, сравнивать их частотности сложно, поэтому мы использовали меру tf-idf, которая позволяет выделить имена, которые специфичные для каждой из групп.
 
 ```{r}
 df |> 
@@ -157,6 +157,38 @@ df |>
   bind_tf_idf(name, region, n) |> 
   group_by(region) |> 
   slice_max(order_by = tf_idf, n = 25) |> 
+  mutate(name = reorder_within(name, within = region, n)) |> 
+  ggplot(aes(n, name))+
+  geom_col()+
+  scale_y_reordered()+
+  facet_wrap(~region, scales = "free")+
+  labs(x = NULL, y = NULL) 
+```
+
+Меру tf-idf можно использовать и для того, чтобы выделить ядро имен общее для обеих групп.
+
+```{r}
+df |> 
+  filter(gender == "m") |>
+  count(name, region) |> 
+  bind_tf_idf(name, region, n) |> 
+  filter(tf_idf == 0) |> 
+  group_by(region) |> 
+  slice_max(order_by = n, n = 25) |> 
+  mutate(name = reorder_within(name, within = region, n)) |> 
+  ggplot(aes(n, name))+
+  geom_col()+
+  scale_y_reordered()+
+  facet_wrap(~region, scales = "free")+
+  labs(x = NULL, y = NULL) 
+
+df |> 
+  filter(gender == "f") |>
+  count(name, region) |> 
+  bind_tf_idf(name, region, n) |> 
+  filter(tf_idf == 0) |> 
+  group_by(region) |> 
+  slice_max(order_by = n, n = 25) |> 
   mutate(name = reorder_within(name, within = region, n)) |> 
   ggplot(aes(n, name))+
   geom_col()+
