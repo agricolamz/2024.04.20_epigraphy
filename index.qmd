@@ -172,7 +172,7 @@ df |>
   slice_max(order_by = n, n = 25) |> 
   mutate(name = reorder_within(name, within = region, n)) |> 
   ggplot(aes(n, name))+
-  geom_col(fill = "#ffd70c")+
+  geom_col(fill = "#602e7b")+
   scale_y_reordered()+
   facet_wrap(~region, scales = "free")+
   labs(x = NULL, y = NULL)
@@ -215,7 +215,7 @@ df |>
   slice_max(order_by = tf_idf, n = 25) |> 
   mutate(name = reorder_within(name, within = region, n)) |> 
   ggplot(aes(n, name))+
-  geom_col(fill = "#ffd70c")+
+  geom_col(fill = "#602e7b")+
   scale_y_reordered()+
   facet_wrap(~region, scales = "free")+
   labs(x = NULL, y = NULL) 
@@ -247,7 +247,7 @@ df |>
   slice_max(order_by = n, n = 25) |> 
   mutate(name = reorder_within(name, within = region, n)) |> 
   ggplot(aes(n, name))+
-  geom_col(fill = "#ffd70c")+
+  geom_col(fill = "#602e7b")+
   scale_y_reordered()+
   facet_wrap(~region, scales = "free")+
   labs(x = NULL, y = NULL) 
