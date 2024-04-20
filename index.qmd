@@ -4,6 +4,7 @@ format:
     df-print: kable
     code-fold: true
 editor: source
+bibliography: bibliography.bib
 editor_options: 
   chunk_output_type: console
 ---
@@ -14,7 +15,7 @@ suppressPackageStartupMessages(library(tidyverse))
 theme_set(theme_minimal() + theme(text = element_text(size = 16), legend.position = "bottom"))
 library(infotheo)
 library(tidytext)
-
+library(inspectdf)
 df <- readxl::read_xlsx("full_dataset.xlsx")
 
 df |> 
@@ -23,7 +24,25 @@ df |>
   tombs
 ```
 
-Мы анализируем `r nrow(df)` имени, обнаруженные на `r tombs$n[1]` ашкеназских и `r tombs$n[2]` горско-еврейских надгробиях в `r length(unique(df$place))` кладбищах. Надгробия охватывают временной промежуток c `{r} min(df$year)` по `{r} max(df$year)` года. В исследовании исследовались только те надгробия, на которых сохранились хотя бы одно из имен (покойного/покойной или его отца) и год смерти. Причем в анализе использовались и имя покойного/покойной, и имя его/ее отца, в связи с этим мужских имен в датасете больше, чем женских:
+Мы анализируем `r nrow(df)` имени, обнаруженные на `r tombs$n[1]` ашкеназских и `r tombs$n[2]` горско-еврейских надгробиях в `r length(unique(df$place))` кладбищах. Надгробия охватывают временной промежуток c `{r} min(df$year)` по `{r} max(df$year)` года. В исследовании исследовались только те надгробия, на которых сохранились хотя бы одно из имен (покойного/покойной или его отца) и год смерти. Структура данных устроена следующим образом:
+
+```{r}
+df |> 
+  mutate(year = as.character(year)) |> 
+  rename(`1. код мацевы` = code,
+         `2. пол` = gender,
+         `3. год смерти` = year,
+         `4. имя` = name,
+         `5. тип имени` = type_of_name,
+         `6. нас. пункт` = place,
+         `7. этнос` = region) |> 
+  inspect_cat() |> 
+  show_plot()+
+  labs(title = NULL, subtitle = NULL, text = element_text(size = 30))+
+  theme(axis.text.y = element_text(hjust = 0))
+```
+
+В анализе использовались и имя покойного/покойной, и имя его/ее отца, в связи с этим мужских имен в датасете больше, чем женских:
 
 ```{r}
 df |> 
@@ -47,10 +66,32 @@ df |>
   geom_histogram(bins = 30, position = "identity")+
   facet_wrap(~region, nrow = 2, scales = "free_y")+
   labs(x = NULL, y = NULL, fill = NULL)+
-  scale_fill_manual(values = c("#009E73", "#E69F00"))
+  scale_fill_manual(values = c("#602e7b", "#ffd70c"))
 ```
 
-Для оценки разнообразия имен мы использовали меру скользящей энтропии:
+Для оценки разнообразия имен мы использовали меру скользящей энтропии. Информационная энтропия обычно определяют следующим образом [@shannon48]:
+
+$$H(X) = - \sum_{i = 1}^n{P(x_i)\times\log_2P(x_i)}$$
+
+Область значения энтропии $H(X) \in [0, +\infty]$. Ниже приводится пример подсчета энтропии для разных наборов данных: 
+
+```{r}
+tibble(a = c("A", "A", "A", "A", "B"),
+       b = c("A", "A", "A", "B", "B"),
+       c = c("A", "A", "B", "B", "B"),
+       e = c("A", "A", "B", "B", "C"),
+       f = c("A", "B", "C", "A", "B"),
+       g = c("A", "A", "A", "A", "A")) |> 
+  pivot_longer(names_to = "id", values_to = "value", a:g) |> 
+  group_by(id) |> 
+  summarise(entropy_value = round(entropy(value), 3),
+            value = str_c(value, collapse = "-")) |> 
+  select(value, entropy_value) |> 
+  arrange(entropy_value) |> 
+  rename(данные = value,
+         энтропия = entropy_value) |> 
+  knitr::kable() 
+```
 
 ```{r}
 window <- 15
@@ -69,7 +110,7 @@ map_dfr(seq(from = min_year, to = max_year), function(j){
 
 entropy_overall |> 
   ggplot(aes(year, entropy_value))+
-  geom_line()+
+  geom_line(color = "#602e7b", linewidth = 1)+
   facet_wrap(~region, nrow = 2)+
   labs(x = NULL, y = "значение скользящей энтропии",
        caption = str_glue("используется окно в {window} лет"))
@@ -81,7 +122,7 @@ entropy_overall |>
 #| fig-height: 11
 df |> 
   ggplot(aes(year))+
-  geom_histogram(bins = 30)+
+  geom_histogram(bins = 30, fill = "#602e7b")+
   facet_wrap(~region+place, scales = "free", ncol = 3)
 
 map_dfr(seq(from = min_year, to = max_year), function(j){
@@ -96,7 +137,7 @@ map_dfr(seq(from = min_year, to = max_year), function(j){
 
 entropy_by_place |> 
   ggplot(aes(year, entropy_value))+
-  geom_line()+
+  geom_line(color = "#602e7b", linewidth = 1)+
   facet_wrap(~region+place, scales = "free", ncol = 3)+
   labs(x = NULL, y = "значение скользящей энтропии",
        caption = str_glue("используется окно в {window} лет"))
@@ -112,7 +153,7 @@ df |>
   slice_max(order_by = n, n = 25) |> 
   mutate(name = reorder_within(name, within = region, n)) |> 
   ggplot(aes(n, name))+
-  geom_col()+
+  geom_col(fill = "#602e7b")+
   scale_y_reordered()+
   facet_wrap(~region, scales = "free")+
   labs(x = NULL, y = NULL)
@@ -124,7 +165,7 @@ df |>
   slice_max(order_by = n, n = 25) |> 
   mutate(name = reorder_within(name, within = region, n)) |> 
   ggplot(aes(n, name))+
-  geom_col()+
+  geom_col(fill = "#ffd70c")+
   scale_y_reordered()+
   facet_wrap(~region, scales = "free")+
   labs(x = NULL, y = NULL)
@@ -146,7 +187,7 @@ df |>
   slice_max(order_by = tf_idf, n = 25) |> 
   mutate(name = reorder_within(name, within = region, n)) |> 
   ggplot(aes(n, name))+
-  geom_col()+
+  geom_col(fill = "#602e7b")+
   scale_y_reordered()+
   facet_wrap(~region, scales = "free")+
   labs(x = NULL, y = NULL) 
@@ -159,7 +200,7 @@ df |>
   slice_max(order_by = tf_idf, n = 25) |> 
   mutate(name = reorder_within(name, within = region, n)) |> 
   ggplot(aes(n, name))+
-  geom_col()+
+  geom_col(fill = "#ffd70c")+
   scale_y_reordered()+
   facet_wrap(~region, scales = "free")+
   labs(x = NULL, y = NULL) 
@@ -177,7 +218,7 @@ df |>
   slice_max(order_by = n, n = 25) |> 
   mutate(name = reorder_within(name, within = region, n)) |> 
   ggplot(aes(n, name))+
-  geom_col()+
+  geom_col(fill = "#602e7b")+
   scale_y_reordered()+
   facet_wrap(~region, scales = "free")+
   labs(x = NULL, y = NULL) 
@@ -191,7 +232,7 @@ df |>
   slice_max(order_by = n, n = 25) |> 
   mutate(name = reorder_within(name, within = region, n)) |> 
   ggplot(aes(n, name))+
-  geom_col()+
+  geom_col(fill = "#ffd70c")+
   scale_y_reordered()+
   facet_wrap(~region, scales = "free")+
   labs(x = NULL, y = NULL) 
