@@ -152,7 +152,7 @@ window.Quarto = {
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>df <span class="sc">|&gt;</span> </span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">year =</span> <span class="fu">as.character</span>(year)) <span class="sc">|&gt;</span> </span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="st">`</span><span class="at">1. код мацевы</span><span class="st">`</span> <span class="ot">=</span> code,</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="st">`</span><span class="at">1. код надгробия</span><span class="st">`</span> <span class="ot">=</span> code,</span>
 <span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>         <span class="st">`</span><span class="at">2. пол</span><span class="st">`</span> <span class="ot">=</span> gender,</span>
 <span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>         <span class="st">`</span><span class="at">3. год смерти</span><span class="st">`</span> <span class="ot">=</span> year,</span>
 <span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>         <span class="st">`</span><span class="at">4. имя</span><span class="st">`</span> <span class="ot">=</span> name,</span>
@@ -315,6 +315,13 @@ window.Quarto = {
 </table>
 </div>
 </div>
+<p>Мы использовали <strong>скользящую энтропию</strong> — оконную функцию, которая вычисляла меру энтропии не для всего датасета, а для некоторого временного интервала (мы использовали окно размером в 15 лет). Так что, если принять во внимание, что наши данные охватывают временной промежуток c 1671 по 2011 года, при анализе мы считали значение энтропии в следующих промежутках:</p>
+<ul>
+<li>1671-1686</li>
+<li>1672-1687</li>
+<li>1673-1688</li>
+<li>и т. д.</li>
+</ul>
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
